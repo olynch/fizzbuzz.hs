@@ -368,25 +368,75 @@
   \end{enumerate}
 \end{frame}
 
+\begin{frame}{FizzBuzz: Hard Mode}
+  FizzBuzz, but...
+  \begin{enumerate}
+    \pause
+    \item For every prime number, put ``Buzz'' instead
+    \pause
+    \item For every fibonacci number, put ``Fizz'' instead
+    \pause
+    \item For every number that is a fibonacci number and a prime number, put ``FizzBuzz'' instead
+  \end{enumerate}
+\end{frame}
+
+\defverbatim[colored]\infiniteLists{
+\begin{haskellcode}
+  repeat :: a -> [a]
+  repeat x = x:(repeat x)
+  -- take 3 (repeat 1) == [1,1,1]
+
+  primes :: [Int]
+  primes = from 2
+    where
+      from k = k:(filter (ndiv k) (from (k+1)))
+      ndiv k n = rem n k /= 0 
+  -- take 4 primes == [2,3,5,7]
+\end{haskellcode}
+}
+
 \begin{frame}{Infinity and Beyond!}
- (Talk about infinite lists)
+ \infiniteLists
+ \pause
+ \begin{enumerate}
+   \item Haskell is lazy -- it only computes values when you ask for them
+ \end{enumerate}
+\end{frame}
+
+\defverbatim[colored]\zipping{
+\begin{haskellcode}
+  zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+  zipWith _ [] _ = []
+  zipWith _ _ [] = []
+  zipWith f (x:xs) (y:ys) = (f x y):(zip f xs ys)
+
+  fibs :: [Int]
+  fibs = 0:1:(zipWith (+) fibs (tail fibs))
+  -- This one's a braintwister!
+\end{haskellcode}
+}
+
+\begin{frame}{Zipping Lists}
+  \zipping
 \end{frame}
 
 \defverbatim[colored]\fizzbuzzThree{
 \begin{haskellcode}
-  looper :: Int -> a -> [Maybe a]
-  looper n s = loop (n-1)
+  spacer :: [Int] -> a -> [Maybe a]
+  spacer (n:ns) s = loop (n-1) (n:ns)
     where
-      loop 0 = (Just s):(loop (n-1))
-      loop k = Nothing:(loop k-1)
+      loop 0 (k1:k2:ns) = (Just s):(loop (k2-k1-1) (k2:ns))
+      loop k ns = Nothing:(loop (k-1) ns)
 
-  zzer2 :: [(Int, String)] -> [Maybe String]
-  zzer2 zzConds = foldl (zip (<>)) zzLists
-    where zzLists = map (uncurry looper) zzConds
+  zzer2 :: [([Int], String)] -> [Maybe String]
+  zzer2 zzConds = foldl (zipWith (<>)) init zzLists
+    where
+      zzLists = map (uncurry spacer) zzConds
+      init = repeat Nothing
 
   sol3 :: [String]
-  sol3 = zip fromMaybe (fmap show [1..100]) zzs
-    where zzs = zzer2 [(3,"Fizz"), (5,"Buzz")]
+  sol3 = zipWith fromMaybe (fmap show [1..100]) zzs
+    where zzs = zzer2 [(primes,"Fizz"), ((tail (tail fibs)),"Buzz")]
 \end{haskellcode}
 }
 
