@@ -1,0 +1,397 @@
+\documentclass{beamer}
+\usetheme{default}
+
+\usepackage{minted}
+
+\title{FizzBuzz in Haskell}
+\author{Owen Lynch}
+
+\newminted{haskell}{fontsize=\large, 
+                    numbersep=8pt,
+                    gobble=2,
+                    bgcolor=bg} 
+               		
+
+\begin{document}
+
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\defverbatim[colored]\factCode{
+\begin{haskellcode}
+  fact :: Int -> Int
+  fact 0 = 1
+  fact n = n * fact (n-1)
+\end{haskellcode}
+}
+
+\begin{frame}{Introducing Haskell}
+  \factCode
+  \begin{enumerate}
+    \pause
+    \item Types
+    \pause
+    \item Functions
+    \pause
+    \item Pattern Matching
+    \pause
+    \item Recursion
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Myths about Haskell}
+  \begin{enumerate}
+    \pause
+    \item Haskell is hard
+    \pause
+    \begin{enumerate}
+      \item \textit{Learning} Haskell is hard, \textit{programming} Haskell is easy!
+      \pause
+      \item Haskell lets you choose the level of abstraction that you are comfortable with, and you can slowly increase this while being productive the whole time
+    \end{enumerate}
+    \pause
+    \item Haskell is for techbro superprogrammers
+    \begin{enumerate}
+      \pause
+      \item Haskell is for people who can't keep lots of stuff in their head at once and want the compiler to make sure they aren't messing things up
+      \pause
+      \item The Haskell community is one of the nicest and friendliest online communities I've been a part of, in part because there is so much to learn that everyone is comparatively a noob
+    \end{enumerate}
+    \pause
+    \item Haskell is for academic ivory-towerists who do too much category theory for their own good
+    \begin{enumerate}
+      \pause
+      \item Haskell is actually a very practical language for all sorts of tasks, and it has been battletested in industry for decades
+    \end{enumerate}
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Introducing FizzBuzz}
+  Make a list of the numbers from 1 to 100, except...
+  \begin{enumerate}
+    \pause
+    \item For every number divisible by 3, put ``Fizz'' instead
+    \pause
+    \item For every number divisible by 5, put ``Buzz'' instead
+    \pause
+    \item For every number divisible by 5 and 3, put ``FizzBuzz'' instead
+  \end{enumerate}
+  \pause
+  How would you solve FizzBuzz?
+\end{frame}
+
+\defverbatim[colored]\introLists{
+\begin{haskellcode}
+  data [a] = [] | a : [a]
+  -- data List a = Empty | Cons a (List a)
+  -- (:) x xs == x : xs
+  -- ([]) a == [a]
+\end{haskellcode}
+}
+
+\defverbatim[colored]\rangeDef{
+\begin{haskellcode}
+  range :: Int -> Int -> [Int]
+  range n m
+    | n == m    = m:[]
+    | otherwise = m:(range (n+1) m)
+  -- range n m == [n..m]
+\end{haskellcode}
+}
+
+\defverbatim[colored]\introFunctors{
+\begin{haskellcode}
+  class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+
+  instance Functor ([]) where
+    fmap g [] = []
+    fmap g (x:xs) = (g x):(fmap g xs)
+    -- fmap :: (a -> b) -> ([]) a -> ([]) b
+    -- fmap :: (a -> b) -> [a] -> [b]
+\end{haskellcode}
+}
+
+\defverbatim[colored]\firstSolution{
+\begin{haskellcode}
+  -- String == [Char]
+
+  fizzbuzz1 :: Int -> String
+  fizzbuzz1 n
+    | rem n 15 == 0 = "FizzBuzz"
+    | rem n  5 == 0 = "Buzz"
+    | rem n  3 == 0 = "Fizz"
+    | otherwise     = show n
+
+  sol1 :: [String]
+  sol1 = fmap fizzbuzz1 [1..100]
+\end{haskellcode}
+}
+
+\begin{frame}{Lists in Haskell}
+  \introLists
+  \begin{enumerate}
+    \pause
+    \item Data declarations
+    \pause
+    \item Parametric data declarations
+    \pause
+    \item Special syntax for stuff
+  \end{enumerate}
+\end{frame}
+
+\defverbatim[colored]\exampleLists{
+\begin{haskellcode}
+  firstFourPrimes :: [Int]
+  firstFourPrimes = 2:(3:(5:(7:[])))
+
+  everFlavoredBeanFlavors :: [String]
+  everFlavoredBeanFlavors =
+    ["earwax", "vomit", "marmalade", "spinach"]
+\end{haskellcode}
+}
+
+\begin{frame}{What does it look like?}
+  \exampleLists
+  (put drawing of a linked list here)
+\end{frame}
+
+\begin{frame}{A useful function}
+  \rangeDef
+  \begin{enumerate}
+    \pause
+    \item Currying
+    \pause
+    \item Guard Notation
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Functors! (Scary? No!)}
+\introFunctors
+\end{frame}
+
+\begin{frame}{What does it look like?}
+  (put drawing of a functor diagram here)
+\end{frame}
+
+\begin{frame}{Luke, use the fmap!}
+\firstSolution  
+\end{frame}
+
+\begin{frame}{Discuss first solution}
+  \begin{enumerate}
+    \item What did we like?
+      \begin{enumerate}
+        \pause
+        \item Types and Typeclasses!
+        \pause
+        \item Recursion!
+        \pause
+        \item Combinators that allowed us to not do recursion!
+        \pause
+        \item Case syntax!
+      \end{enumerate}
+    \pause
+    \item What did we not like?
+      \begin{enumerate}
+        \pause
+        \item Not extensible enough! (What about Bazz??)
+      \end{enumerate}
+  \end{enumerate}
+\end{frame}
+
+\defverbatim[colored]\fizzbuzzbazzOne{
+\begin{haskellcode}
+  fizzbuzzbazz1 :: Int -> String
+  fizzbuzzbazz1 n
+    | rem n 105 == 0 = "FizzBuzzBazz"
+    | rem n  35 == 0 = "BuzzBazz"
+    | rem n  21 == 0 = "FizzBazz"
+    | rem n  15 == 0 = "FizzBuzz"
+    | rem n   7 == 0 = "Bazz"
+    | rem n   5 == 0 = "Buzz"
+    | rem n   3 == 0 = "Fizz"
+    | otherwise      = show n
+\end{haskellcode}
+}
+
+\begin{frame}{FizzBuzzBazz}
+  \fizzbuzzbazzOne
+  \pause
+  This is terrible!
+\end{frame}
+
+\defverbatim[colored]\introMonoids{
+\begin{haskellcode}
+  class Monoid m where
+    mempty :: m
+    mappend :: m -> m -> m
+    -- (<>) == mappend
+\end{haskellcode}
+}
+
+\defverbatim[colored]\identityEq{
+\begin{haskellcode}
+  a <> mempty == a == mempty <> a
+\end{haskellcode}
+}
+
+\defverbatim[colored]\associativityEq{
+\begin{haskellcode}
+  (a <> b) <> c == a <> (b <> c)
+\end{haskellcode}
+}
+
+\begin{frame}{And now for something completely different}
+  \introMonoids
+  \pause
+  We require a couple laws
+  \pause
+  \begin{enumerate}
+    \item Identity \\
+    \pause
+    \identityEq
+    \pause
+    \item Associativity \\
+    \pause
+    \associativityEq
+  \end{enumerate}
+\end{frame}
+
+\defverbatim[colored]\listMonoid{
+\begin{haskellcode}
+  (++) :: [a] -> [a] -> [a]
+  [] ++ ys = ys
+  (x:xs) ++ ys = x:(xs ++ ys)
+
+  instance Monoid [a] where
+    mempty = []
+    mappend = (++)
+\end{haskellcode}
+}
+
+\defverbatim[colored]\maybeMonoid{
+\begin{haskellcode}
+  data Maybe a = Just a | Nothing
+
+  instance (Monoid a) => Monoid (Maybe a) where
+    mempty = Nothing
+    mappend Nothing Nothing = Nothing
+    mappend (Just a) Nothing = Just a
+    mappend Nothing (Just b) = Just b
+    mappend (Just a) (Just b) = Just (a <> b)
+\end{haskellcode}
+}
+
+\begin{frame}{You already know lots of monoids!}
+  Take a couple minutes and think of monoids.
+\end{frame}
+
+\begin{frame}{List Monoid}
+  \listMonoid
+\end{frame}
+
+\begin{frame}{Maybe Monoid}
+  \maybeMonoid
+  \pause
+  Note the "type constraint" in the instance for the Maybe monoid; we need this in order to deal with the last case.
+\end{frame}
+
+\defverbatim[colored]\usefulFunctions{
+\begin{haskellcode}
+  foldl :: (a -> b -> a) -> a -> [b] -> a
+  foldl f acc [] = acc
+  foldl f acc (x:xs) = foldl f (f acc x) xs
+  -- sum == foldl (+) 0
+  -- length == foldl (\n _ -> n + 1) 0
+
+  mconcat :: (Monoid m) -> [m] -> m
+  mconcat = foldl mappend mempty
+  -- mconcat ["tweedle", "dee"] == "tweedledee"
+\end{haskellcode}
+}
+
+\begin{frame}{Two useful functions}
+  \usefulFunctions
+\end{frame}
+
+\defverbatim[colored]\workingWithMaybes{
+\begin{haskellcode}
+  fromMaybe :: a -> Maybe a -> a
+  fromMaybe def Nothing = def
+  fromMaybe _ (Just y) = y
+
+  makeMaybe :: Bool -> a -> Maybe a
+  makeMaybe True x = Just x
+  makeMaybe False _ = Nothing
+\end{haskellcode}
+}
+
+\begin{frame}{Working with Maybes}
+  \workingWithMaybes
+\end{frame}
+
+\defverbatim[colored]\fizzbuzzTwo{
+\begin{haskellcode}
+  zzer1 :: [(Int, String)] -> Int -> String
+  zzer1 zzConds n = fromMaybe (show n) zzs
+    where
+      zzs = mconcat (fmap maybeZz zzConds)
+      maybeZz (k, zz) = makeMaybe (rem n k == 0) zz
+
+  sol2 :: [String]
+  sol2 = fmap (zzer1 fizzbuzz) [1..100]
+    where fizzbuzz = [(3, "Fizz"), (5, "Buzz")]
+\end{haskellcode}
+}
+
+\begin{frame}{FizzBuzz revisited}
+  \fizzbuzzTwo
+\end{frame}
+
+\begin{frame}{Reflections on take 2}
+  What do we like?
+  \pause
+  \begin{enumerate}
+    \item Much more extensible!
+    \pause
+    \item Shorter!
+  \end{enumerate}
+  \pause
+  What do we not like?
+  \begin{enumerate}
+    \pause
+    \item Division
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Infinity and Beyond!}
+ (Talk about infinite lists)
+\end{frame}
+
+\defverbatim[colored]\fizzbuzzThree{
+\begin{haskellcode}
+  looper :: Int -> a -> [Maybe a]
+  looper n s = loop (n-1)
+    where
+      loop 0 = (Just s):(loop (n-1))
+      loop k = Nothing:(loop k-1)
+
+  zzer2 :: [(Int, String)] -> [Maybe String]
+  zzer2 zzConds = foldl (zip (<>)) zzLists
+    where zzLists = map (uncurry looper) zzConds
+
+  sol3 :: [String]
+  sol3 = zip fromMaybe (fmap show [1..100]) zzs
+    where zzs = zzer2 [(3,"Fizz"), (5,"Buzz")]
+\end{haskellcode}
+}
+
+\begin{frame}{FizzBuzz: The Final Showdown}
+  \fizzbuzzThree
+\end{frame}
+
+\end{document}
