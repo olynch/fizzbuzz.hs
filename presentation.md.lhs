@@ -431,7 +431,7 @@ This is the same thing as the vector space of polynomials of one variable over $
 
 $[1,0,\pi] \approx 1 + \pi x^2$
 
-== FizzBuzz: The Final Showdown Part 1
+== FizzBuzz: The Final Showdown (Part 1)
 
 > spacer :: [Int] -> a -> [Maybe a]
 > spacer (n:ns) x = loop (n-1) (n:ns)
@@ -439,12 +439,12 @@ $[1,0,\pi] \approx 1 + \pi x^2$
 >     loop 0 (k1:k2:ns) =
 >       (Just x):(loop (k2-k1-1) (k2:ns))
 >     loop k ns = Nothing:(loop (k-1) ns)
+>
+> -- spacer [1,3,4,7,...] 'x' ==
+> --   [Just 'x', Nothing, Just 'x', Just 'x', Nothing
+> --    Nothing, Just 'x',...]
 
-< spacer [1,3,4,7,...] 'x' ==
-<   [Just 'x', Nothing, Just 'x', Just 'x', Nothing
-<    Nothing, Just 'x',...]
-
-== FizzBuzz The Final Showdown Part 2
+== FizzBuzz The Final Showdown (Part 2)
 
 > (.) :: (b -> c) -> (a -> b) -> (a -> c)
 > (f . g) x = f (g x)
