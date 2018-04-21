@@ -26,3 +26,4 @@
 *.synctex.gz
 *.fdb_latexmk
 _minted-presentation/*
+**/dist

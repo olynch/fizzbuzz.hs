@@ -56,27 +56,26 @@ Notable Features
 - How would you solve FizzBuzz?
 
 
-== Lists in Haskell
+== Lists
 
-How can we make a list until we know what a list *is*?
+How can we make a list until we know what a list *is*??
+
+. . .
+
+![](lists.jpg){ width=50% }
+
+== Lists in Haskell
 
 < data [a] = [] | a : [a]
 < -- data List a = Empty | Cons a (List a)
 < -- (:) x xs == x : xs
 < -- ([]) a = [a]
 
-- New Stuff:
-  - Data Declarations
-  - Parametric data declarations
-  - Special syntax for stuff
-
-== What does it look like?
-
 > firstFourPrimes :: [Int]
 > firstFourPrimes = 2:(3:(5:(7:[])))
 >
 > type String = [Char]
-> -- "abc" = ['a', 'b', 'c']
+> -- "abc" = 'a':('b':('c':[]))
 > 
 > everFlavoredBeanFlavors :: [String]
 > everFlavoredBeanFlavors =
@@ -154,7 +153,13 @@ This is terrible!
 == How should we solve this?
 
 - We need to be able to compose different "zz"s
-- To do this, we will use a very common structure... monoids!
+- To do this, we will use a common structure for composing things
+- We need...
+  - A data type
+  - A way of putting two elements of that data type together
+  - A neutral element that doesn't change other elements when you compose with it
+- That's a recipe for a...
+- Monoid!
 
 == Monoid Hype
 
@@ -178,31 +183,22 @@ This is terrible!
   \end{minipage}
 \end{figure}
 
-== OK, yeah, but what are these things?
-
-- A monoid is a data type `m` with
-
-  - a function `(<>) :: m -> m -> m`...
-  - a special element `mempty :: m`
-
-- It should also be "nice" -- it should satisfy
-
-  - `a <> (b <> c) == (a <> b) <> c`
-  - `a <> mempty == a == mempty <> a`
-
 == You already know lots of monoids!
 
 Take a couple minutes and think of monoids
 
+. . .
+
+- Strings or lists with concatenation
+- Bytes with `AND` and `11111111` 
+- Bytes with `OR` and `00000000`
+- Functions `f :: a -> a` along with composition and the identity function
 - Any type of number ($\mathbb{N}$, $\mathbb{Z}$, $\mathbb{Q}$, $\mathbb{R}$, $\mathbb{C}$) along with addition
 - Any type of number along with multiplication
-- Matrices with addition
-- Matrices with multiplication (non-commutative!)
 - Any ordered set along with max and a "negative infinity" element as identity
 - Any ordered set along with min and a "positive infinity" element as identity
 
 == Some nitty-gritties...
-
 
 In Haskell, we write the definition of a Monoid like this
 
@@ -282,13 +278,35 @@ Unfortunately, we can't write down the laws... we just have to trust that whenev
 > repeat :: a -> [a]
 > repeat x = x:(repeat x)
 > -- take 3 (repeat 1) = [1,1,1]
->
+
+== Infinite list illustration
+
+![](repeat1.jpg){ width=50% }
+
+== Infinite list illustration
+
+![](repeat2.jpg){ width=50% }
+
+== Generating prime numbers
+
 > primes :: [Int]
 > primes = from 2
 >   where
 >     from k = k:(filter (ndiv k) (from (k+1)))
 >     ndiv k n = rem n k /= 0
 > -- take 4 primes == [2,3,5,7]
+
+== An illustration of `primes`
+
+![](primes1.jpg){ width=50% }
+
+== An illustration of `primes`
+
+![](primes2.jpg){ width=50% }
+
+== An illustration of `primes`
+
+![](primes3.jpg){ width=50% }
 
 == Zipping Lists
 
@@ -297,10 +315,28 @@ Unfortunately, we can't write down the laws... we just have to trust that whenev
 > zipWith _ _ [] = []
 > zipWith f (x:xs) (y:ys) =
 >   (f x y):(zipWith f xs ys)
->
+
+== The zipWith Monster!
+
+![](zipWith1.jpg){ width=50% }
+
+== The zipWith Monster!
+
+![](zipWith2.jpg){ width=50% }
+
+== Fibonacci numbers
+
 > fibs :: [Int]
 > fibs = 1:2:(zipWith (+) fibs (tail fibs))
 > -- This one's a braintwister!
+
+== The Fibonacci zipWith Monster!
+
+![](fibZipWith1.jpg){ width=50% }
+
+== The Fibonacci zipWith Monster!
+
+![](fibZipWith2.jpg){ width=50% }
 
 == Lists as Monoids Revisited
 
@@ -336,17 +372,24 @@ This is the same thing as the vector space of polynomials of one variable over $
 
 $[1,0,\pi] \approx 1 + \pi x^2$
 
-== FizzBuzz: The Final Showdown
+== FizzBuzz: The Final Showdown Part 1
 
 > spacer :: [Int] -> a -> [Maybe a]
-> spacer (n:ns) s = loop (n-1) (n:ns)
+> spacer (n:ns) x = loop (n-1) (n:ns)
 >   where
 >     loop 0 (k1:k2:ns) =
->       (Just s):(loop (k2-k1-1) (k2:ns))
+>       (Just x):(loop (k2-k1-1) (k2:ns))
 >     loop k ns = Nothing:(loop (k-1) ns)
->
+
+< spacer [1,3,4,7,...] 'x' ==
+<   [Just 'x', Nothing, Just 'x', Just 'x', Nothing
+<    Nothing, Just 'x',...]
+
+== FizzBuzz The Final Showdown Part 2
+
 > combine :: (Monoid a) => [([Int], a)] -> [Maybe a]
 > combine = unS . mconcat . map (S . uncurry spacer)
+> -- uncurry spacer :: ([Int], a) -> [Maybe a]
 >
 > sol3 :: [String]
 > sol3 = zipWith fromMaybe (map show [1..100]) descs
@@ -380,7 +423,16 @@ $[1,0,\pi] \approx 1 + \pi x^2$
 
 . . .
 
-Shout out to my beta testers Max, Megan and Shelley, who (will) give me valuable feedback.
+Shout out to my beta testers Max, Megan and Shelley, who gave me some really good feedback! If you understood this talk, it was entirely their fault.
+
+. . .
+
+
+Shriram (against his better judgement) sponsored this talk, convincing the CS department to let me book this room.
+
+. . .
+
+Monoid Mary (Julie Moronuki) allowed me to quote her and also gave me the quote from Real World Haskell.
 
 . . .
 
