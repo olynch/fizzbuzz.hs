@@ -8,7 +8,7 @@
 > 
 > module Presentation where
 > 
-> import Prelude hiding (Monoid, mappend, mempty, (<>), map, range, Just, Nothing, Maybe, repeat, zipWith, mconcat, foldl, String)
+> import Prelude hiding (Monoid, mappend, mempty, (<>), map, range, Just, Nothing, Maybe, repeat, zipWith, mconcat, foldl, String, (.))
 
 }
 
@@ -18,6 +18,16 @@
 > fact 0 = 1
 > fact n = n * fact (n-1)
 
+Equivalent python code:
+
+~~~{.python}
+def fact(n):
+  if n == 0:
+    return 1
+  else:
+    return n*(fact(n-1))
+~~~
+
 . . .
 
 Notable Features
@@ -25,9 +35,43 @@ Notable Features
 . . .
 
 - Types
-- Functions
 - Pattern Matching
-- Recursion
+
+== The Anatomy of a Haskell Definition
+
+Type Signature
+
+![](factTypeSignature.png){ width=50% }
+
+== The Anatomy of a Haskell Definition
+
+Name
+
+![](factName.png){ width=50% }
+
+== The Anatomy of a Haskell Definition
+
+Type
+
+![](factType.png){ width=50% }
+
+== The Anatomy of a Haskell Definition
+
+Definition
+
+![](factDefinition.png){ width=50% }
+
+== The Anatomy of a Haskell Definition
+
+Argument
+
+![](factArgument.png){ width=50% }
+
+== The Anatomy of a Haskell Definition
+
+Value
+
+![](factValue.png){ width=50% }
 
 == Myths about Haskell
 
@@ -64,6 +108,21 @@ How can we make a list until we know what a list *is*??
 
 ![](lists.jpg){ width=50% }
 
+== Lists in Python
+
+~~~{.python}
+class ConsCell:
+  def __init__(head, tail)
+    self.head = head
+    self.tail = tail
+
+class EmptyList:
+  def __init__():
+    return
+
+oneTwo = ConsCell(1, ConsCell(2, EmptyList))
+~~~
+
 == Lists in Haskell
 
 < data [a] = [] | a : [a]
@@ -77,9 +136,9 @@ How can we make a list until we know what a list *is*??
 > type String = [Char]
 > -- "abc" = 'a':('b':('c':[]))
 > 
-> everFlavoredBeanFlavors :: [String]
-> everFlavoredBeanFlavors =
->   ["earwax", "vomit", "marmalade", "spinach"]
+> everyFlavoredBeanFlavors :: [String]
+> everyFlavoredBeanFlavors =
+>   ["earwax", "marmalade", "spinach"]
 
 == How do we work with it?
 
@@ -387,6 +446,11 @@ $[1,0,\pi] \approx 1 + \pi x^2$
 
 == FizzBuzz The Final Showdown Part 2
 
+> (.) :: (b -> c) -> (a -> b) -> (a -> c)
+> (f . g) x = f (g x)
+> -- We need the Monoid instance for a because we need
+> -- a monoid instance for Stream (Maybe a), which we
+> -- need because of mconcat
 > combine :: (Monoid a) => [([Int], a)] -> [Maybe a]
 > combine = unS . mconcat . map (S . uncurry spacer)
 > -- uncurry spacer :: ([Int], a) -> [Maybe a]
