@@ -444,7 +444,7 @@ $[1,0,\pi] \approx 1 + \pi x^2$
 > --   [Just 'x', Nothing, Just 'x', Just 'x', Nothing
 > --    Nothing, Just 'x',...]
 
-== FizzBuzz The Final Showdown (Part 2)
+== FizzBuzz: The Final Showdown (Part 2)
 
 > (.) :: (b -> c) -> (a -> b) -> (a -> c)
 > (f . g) x = f (g x)
