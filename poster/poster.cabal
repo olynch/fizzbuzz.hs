@@ -1,0 +1,40 @@
+-- This file has been generated from package.yaml by hpack version 0.21.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 8ab05b72c5685bb13951b896debfb74fcd7d244c0c2a0a5f1d4b0ea2243e1368
+
+name:           poster
+version:        0.1.0
+author:         Owen Lynch
+maintainer:     oclynch888@gmail.com
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    ChangeLog.md
+
+executable poster
+  main-is: Main.hs
+  other-modules:
+      Presentation
+  hs-source-dirs:
+      src
+  default-extensions: BangPatterns DataKinds DefaultSignatures DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable EmptyDataDecls ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving KindSignatures LambdaCase MultiParamTypeClasses NoImplicitPrelude OverloadedStrings PartialTypeSignatures PatternGuards RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeFamilies TypeSynonymInstances ViewPatterns
+  ghc-options: -Wall
+  build-depends:
+      base >=4.10 && <5
+    , containers
+    , diagrams
+    , diagrams-cairo
+    , diagrams-contrib
+    , diagrams-lib
+    , diagrams-svg
+    , microlens-platform
+    , mtl
+    , protolude
+    , text
+    , transformers
+  default-language: Haskell2010

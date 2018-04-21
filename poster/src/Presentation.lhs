@@ -4,11 +4,9 @@
 \newcommand{\ignore}[1]{}
 \ignore{
 
-> {-# LANGUAGE NoImplicitPrelude #-}
-> 
 > module Presentation where
 > 
-> import Prelude hiding (Monoid, mappend, mempty, (<>), map, range, Just, Nothing, Maybe, repeat, zipWith, mconcat, foldl, String)
+> import Prelude hiding (Monoid, mappend, mempty, (<>), map, range, Just, Nothing, Maybe, repeat, zipWith, mconcat, foldl)
 
 }
 
@@ -75,12 +73,11 @@ How can we make a list until we know what a list *is*?
 > firstFourPrimes :: [Int]
 > firstFourPrimes = 2:(3:(5:(7:[])))
 >
-> type String = [Char]
-> -- "abc" = ['a', 'b', 'c']
-> 
 > everFlavoredBeanFlavors :: [String]
 > everFlavoredBeanFlavors =
 >   ["earwax", "vomit", "marmalade", "spinach"]
+
+(put drawing of linked list here)
 
 == How do we work with it?
 
@@ -90,8 +87,8 @@ Our first step is generating all of the numbers from 1 to 100.
 
 > range :: Int -> Int -> [Int]
 > range n m
->   | n == m    = [n]
->   | otherwise = n:(range (n+1) m)
+>   | n == m    = m:[]
+>   | otherwise = m:(range (n+1) m)
 > -- range n m == [n..m]
 
 . . .
@@ -115,6 +112,8 @@ Now, we need to do something to each of those numbers.
 
 == The first solution
 
+> -- String = [Char]
+> 
 > fizzbuzz1 :: Int -> String
 > fizzbuzz1 n
 >   | rem n 15 == 0 = "FizzBuzz"
@@ -194,15 +193,7 @@ This is terrible!
 
 Take a couple minutes and think of monoids
 
-- Any type of number ($\mathbb{N}$, $\mathbb{Z}$, $\mathbb{Q}$, $\mathbb{R}$, $\mathbb{C}$) along with addition
-- Any type of number along with multiplication
-- Matrices with addition
-- Matrices with multiplication (non-commutative!)
-- Any ordered set along with max and a "negative infinity" element as identity
-- Any ordered set along with min and a "positive infinity" element as identity
-
 == Some nitty-gritties...
-
 
 In Haskell, we write the definition of a Monoid like this
 
@@ -250,24 +241,23 @@ Unfortunately, we can't write down the laws... we just have to trust that whenev
 
 == FizzBuzz Revisited
 
-> fizzbuzz2 :: [(Int, String)] -> Int -> String
-> fizzbuzz2 conds n = fromMaybe (show n) mdesc
+> zzer1 :: [(Int, String)] -> Int -> String
+> zzer1 zzConds n = fromMaybe (show n) zzs
 >   where
->     mdesc = mconcat (map maybeWord conds)
->     maybeWord (k, word)
->       | rem n k == 0 = Just word
+>     zzs = mconcat (map maybeZz zzConds)
+>     maybeZz (k, zz)
+>       | rem n k == 0 = Just zz
 >       | otherwise    = Nothing
 >
 > sol2 :: [String]
-> sol2 = map (fizzbuzz2 conds) [1..100]
->   where conds = [(3, "Fizz"), (5, "Buzz")]
+> sol2 = map (zzer1 fizzbuzz) [1..100]
+>   where fizzbuzz = [(3, "Fizz"), (5, "Buzz")]
 
 == Reflections on take 2
 
 - What do we like?
-  - Monoids!
-  - Currying!
   - Much more extensible!
+  - Shorter!
 - What do we not like?
   - Still not extensible enough!
 
@@ -302,41 +292,7 @@ Unfortunately, we can't write down the laws... we just have to trust that whenev
 > fibs = 1:2:(zipWith (+) fibs (tail fibs))
 > -- This one's a braintwister!
 
-== Lists as Monoids Revisited
-
-> newtype Stream a = S [a]
-> 
-> unS :: Stream a -> [a]
-> unS (S xs) = xs
->
-> instance Monoid a => Monoid (Stream a) where
->   mempty = S []
->   (S []) <> (S ys) = S ys
->   (S xs) <> (S []) = S xs
->   (S (x:xs)) <> (S (y:ys)) = S ((x <> y):rest)
->     where (S rest) = (S xs) <> (S ys)
-
-Conceptually, when the list ends, we treat the rest as an infinite stream of `mempty`s (this might make more sense in the context of the next slide)
-
-== Thoughts on Streams
-
-`Stream Double` is a vector space, where Double is the type of real numbers (OK, floating point numbers) in Haskell.
-
-< scalarMult :: Double -> Stream Double -> Stream Double
-< scalarMult r (S xs) = S (map (r*) xs)
-<
-< addV :: Stream Double -> Stream Double -> Stream Double
-< addV = (<>)
-< -- The monoid instance for Double uses addition
-<
-< negV :: Stream Double -> Stream Double
-< negV = scalarMult (-1)
-
-This is the same thing as the vector space of polynomials of one variable over $\mathbb{R}$.
-
-$[1,0,\pi] \approx 1 + \pi x^2$
-
-== FizzBuzz: The Final Showdown
+== One last helper function...
 
 > spacer :: [Int] -> a -> [Maybe a]
 > spacer (n:ns) s = loop (n-1) (n:ns)
@@ -344,45 +300,16 @@ $[1,0,\pi] \approx 1 + \pi x^2$
 >     loop 0 (k1:k2:ns) =
 >       (Just s):(loop (k2-k1-1) (k2:ns))
 >     loop k ns = Nothing:(loop (k-1) ns)
->
-> combine :: (Monoid a) => [([Int], a)] -> [Maybe a]
-> combine = unS . mconcat . map (S . uncurry spacer)
+
+== FizzBuzz: The Final Showdown
+
+> zzer2 :: [([Int], String)] -> [Maybe String]
+> zzer2 zzConds = foldl (zipWith (<>)) init zzLists
+>   where
+>     zzLists = map (uncurry spacer) zzConds
+>     init = repeat Nothing
 >
 > sol3 :: [String]
-> sol3 = zipWith fromMaybe (map show [1..100]) descs
->   where descs = combine [(primes,"Fizz"), (fibs,"Buzz")]
-
-== Reflecting on the Final Showdown
-
-- What we liked
-  - Really really extensible!
-  - Argument-free function definition!
-- What we didn't like
-  - Really hard to understand!
-- There should always be a balance, no matter what your programming language is. The difference is, in Haskell you have many more choices about how you balance.
-
-== Resources
-
-- Resources for learning haskell
-  - Learn You a Haskell for Great Good
-    - FREE online at learnyouahaskell.com
-  - Haskell Programming From First Principles
-    - REALLY GOOD, NOT FREE, online at haskellbook.com
-  - Real World Haskell
-    - PRETTY GOOD, FREE, google for pdf or email me
-- Resources for using Haskell
-  - stack, a package manager for Haskell
-    - haskellstack.org
-  - haskell.org, the center of all things Haskell
-  - hoogle, a search engine for functions, data types, etc. (REALLY USEFUL)
-
-== Thank You
-
-. . .
-
-Shout out to my beta testers Max, Megan and Shelley, who (will) give me valuable feedback.
-
-. . .
-
-Thank you all for coming and being curious!
-
+> sol3 = zipWith fromMaybe (map show [1..100]) zzs
+>   where
+>     zzs = zzer2 [(primes,"Fizz"), (fibs,"Buzz")]
