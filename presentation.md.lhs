@@ -211,14 +211,141 @@ This is terrible!
 
 == How should we solve this?
 
-- We need to be able to compose different "zz"s
-- To do this, we will use a common structure for composing things
-- We need...
-  - A data type
-  - A way of putting two elements of that data type together
-  - A neutral element that doesn't change other elements when you compose with it
-- That's a recipe for a...
-- Monoid!
+- First of all, let's make it generic over the descriptions
+
+. . .
+
+< fizzbuzz2 :: [(Int, String)] -> Int -> String
+
+. . .
+
+- Now, what are going to do with each `(Int,String)`?
+
+. . .
+
+< data NumberDescription = Description String | NoComment
+<
+< describe :: Int -> (Int, String) -> NumberDescription
+< describe n (k, s)
+<   | rem n k == 0 = Description s
+<   | otherwise    = NoComment
+<
+< fizzbuzz2 conds n =
+<   <something> (map (\c -> describe n c) conds)
+
+== How do we compose number descriptions?
+
+- We need to be able to compose different number descriptions.
+- What does compose mean? (Think and talk about it)
+
+. . .
+
+< compose :: [NumberDescription] -> NumberDescription
+< compose [] = NoComment
+< compose (NoComment:rest) = rest
+< compose ((Description s):rest) = case compose rest of
+<   NoComment -> NumberDescription s
+<   NumberDescription s' -> NumberDescription (s ++ s')
+<
+< (++) :: [a] -> [a] -> [a]
+< [] ++ ys = ys
+< (x:xs) ++ ys = x:(xs ++ ys)
+
+== A slight problem
+
+We end up with a NumberDescription and we want a string
+
+. . .
+
+< withDefault :: Int -> NumberDescription -> String
+< withDefault n NoComment = show n
+< withDefault n (Description s) = s
+<
+< fizzbuzz2 conds n = withDefault n
+<   (compose (map (\c -> describe n c) conds))
+
+== The Long March of refactoring
+
+Currying
+
+. . .
+
+< describe :: Int -> (Int, String) -> NumberDescription
+< (\c -> describe n c) :: (Int, String) -> NumberDescription
+< describe n :: (Int, String) -> NumberDescription
+
+< fizzbuzz2 conds n = withDefault n
+<   (compose (map (describe n) conds))
+
+== Maybe types
+
+< data Maybe a = Just a | Nothing
+<
+< compose :: [Maybe a] -> Maybe a
+< compose [] = Nothing
+< compsoe (Nothing:rest) = compose rest
+< compose ((Just x):rest) = case compose rest of
+<   Nothing -> Just x
+<   Just y -> ??????????
+
+. . .
+
+We need to compose x and y! When they are strings, this is fine, but what if they are something else?
+
+== TypeClasses: Types with Class
+
+![](typesWithClass.png){ width=30% }
+
+< class Composable a where
+<   compose :: [a] -> a
+<
+< instance (Composable a) => Composable (Maybe a) where
+<   compose [] = Nothing
+<   compose ((Just x):rest) = case compose rest of
+<     Nothing -> Just x
+<     Just y -> Just (compose [x,y])
+
+== Waste not Want not
+
+To write compose, we only really need two things
+
+- Something to return in the empty list case
+- A way of composing *two* elements
+
+. . .
+
+In math this is called a Monoid, because it sounds cool that's why
+
+. . .
+
+> class Monoid a where
+>   mempty :: a
+>   (<>) :: a -> a -> a
+
+> mconcat :: (Monoid a) => [a] -> a
+> mconcat [] = mempty
+> mconcat (x:xs) = x <> (mconcat xs)
+
+== Well-behavedness
+
+We want:
+
+. . .
+
+- `mconcat (xs ++ ys) == (mconcat xs) <> (mconcat ys)`
+
+. . .
+
+We can get this property if we require that
+
+. . .
+
+- `mempty <> x == x == x <> mempty`
+  - this is because `[] ++ xs == xs == xs ++ []`
+  - This is called the "Identity Law"
+- `x <> (y <> z) == (x <> y) <> z`
+  - this is because `[a,b] ++ [c] == [a] ++ [b,c]`
+  - This is called the "Associativity Law"
 
 == Monoid Hype
 
@@ -257,26 +384,11 @@ Take a couple minutes and think of monoids
 - Any ordered set along with max and a "negative infinity" element as identity
 - Any ordered set along with min and a "positive infinity" element as identity
 
-== Some nitty-gritties...
-
-In Haskell, we write the definition of a Monoid like this
-
-> class Monoid m where
->   mempty :: m
->   (<>) :: m -> m -> m
-
-Unfortunately, we can't write down the laws... we just have to trust that whenever someone implements a Monoid they make sure they satisfy them!
-
-== List Monoid
+== Back to FizzBuzz...
 
 > instance Monoid [a] where
 >   mempty = []
->   [] <> ys = ys
->   (x:xs) <> ys = x:(xs <> ys)
-
-== Maybe Monoid
-
-> data Maybe a = Just a | Nothing
+>   (<>) = (++)
 >
 > instance (Monoid a) => Monoid (Maybe a) where
 >   mempty = Nothing
@@ -285,33 +397,20 @@ Unfortunately, we can't write down the laws... we just have to trust that whenev
 >   Nothing <> (Just b) = Just b
 >   (Just a) <> (Just b) = Just (a <> b)
 
-== Working with Maybes
+== FizzBuzz Refactored
 
 > fromMaybe :: a -> Maybe a -> a
 > fromMaybe def Nothing = def
 > fromMaybe _ (Just y) = y
-
-== Combining lists
-
-> foldl :: (a -> b -> a) -> a -> [b] -> a
-> foldl f acc [] = acc
-> foldl f acc (x:xs) = foldl f (f acc x) xs
-> -- sum == foldl (+) 0
-> -- length == foldl (\n _ -> n + 1) 0
 >
-> mconcat :: (Monoid m) => [m] -> m
-> mconcat = foldl (<>) mempty
-> -- mconcat ["tweedle", "dee"] == "tweedledee"
-
-== FizzBuzz Revisited
-
+> describe :: Int -> (Int, String) -> Maybe String
+> describe n (k, s)
+>   | rem n k == 0 = Just s
+>   | otherwise = Nothing
+>
 > fizzbuzz2 :: [(Int, String)] -> Int -> String
-> fizzbuzz2 conds n = fromMaybe (show n) mdesc
->   where
->     mdesc = mconcat (map maybeWord conds)
->     maybeWord (k, word)
->       | rem n k == 0 = Just word
->       | otherwise    = Nothing
+> fizzbuzz2 conds n
+>   = fromMaybe (show n) (mconcat (map (describe n) conds))
 >
 > sol2 :: [String]
 > sol2 = map (fizzbuzz2 conds) [1..100]
@@ -338,13 +437,15 @@ Unfortunately, we can't write down the laws... we just have to trust that whenev
 > repeat x = x:(repeat x)
 > -- take 3 (repeat 1) = [1,1,1]
 
-== Infinite list illustration
+![](repeat1.jpg){ width=40% }
 
-![](repeat1.jpg){ width=50% }
+== Infinity and Beyond!
 
-== Infinite list illustration
+< repeat :: a -> [a]
+< repeat x = x:(repeat x)
+< -- take 3 (repeat 1) = [1,1,1]
 
-![](repeat2.jpg){ width=50% }
+![](repeat2.jpg){ width=40% }
 
 == Generating prime numbers
 
@@ -465,12 +566,12 @@ $[1,0,\pi] \approx 1 + \pi x^2$
   - Really really extensible!
   - Argument-free function definition!
 - What we didn't like
-  - Really hard to understand!
+  - Very dense, hard to come up with on the fly
 - There should always be a balance, no matter what your programming language is. The difference is, in Haskell you have many more choices about how you balance.
 
 == Resources
 
-- Resources for learning haskell
+- Resources for learning Haskell
   - Learn You a Haskell for Great Good
     - FREE online at learnyouahaskell.com
   - Haskell Programming From First Principles
@@ -487,12 +588,12 @@ $[1,0,\pi] \approx 1 + \pi x^2$
 
 . . .
 
-Shout out to my beta testers Max, Megan and Shelley, who gave me some really good feedback! If you understood this talk, it was entirely their fault.
+Shout out to my beta testers Max and Megan, without whom this talk would be far less comprehensible.
 
 . . .
 
 
-Shriram (against his better judgement) sponsored this talk, convincing the CS department to let me book this room.
+Shriram sponsored this talk and helped me rework the section on Monoids -- if you understand Monoids now, you have him to blame.
 
 . . .
 
